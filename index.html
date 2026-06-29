@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>安心點餐練習機</title>
+  <style>
+    :root{
+      --bg:#faf8f1;
+      --card:#ffffff;
+      --text:#344049;
+      --muted:#6a7580;
+      --line:#e4e7ea;
+      --green:#67a776;
+      --green-dark:#387c4a;
+      --orange:#f4a75c;
+      --blue:#63a5d6;
+      --purple:#9c7ec4;
+      --yellow:#fce29a;
+      --shadow:0 16px 40px rgba(52,64,73,.12);
+      --radius:26px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","Microsoft JhengHei",Arial,sans-serif;
+      background:linear-gradient(180deg,#fffdf7 0%,var(--bg) 100%);
+      color:var(--text);
+      min-height:100vh;
+    }
+    .app{
+      max-width:430px;
+      min-height:100vh;
+      margin:0 auto;
+      padding:18px 16px 28px;
+      position:relative;
+    }
+    .screen{display:none; animation:fade .16s ease-out}
+    .screen.active{display:block}
+    @keyframes fade{from{opacity:.4; transform:translateY(4px)}to{opacity:1; transform:translateY(0)}}
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:12px; margin-bottom:14px;
+    }
+    .brand{
+      display:inline-flex; align-items:center; gap:8px;
+      background:var(--green); color:#fff;
+      padding:8px 12px; border-radius:999px;
+      font-weight:800; letter-spacing:.02em;
+      box-shadow:0 8px 20px rgba(103,167,118,.25);
+    }
+    .ghost-btn{
+      appearance:none;border:1px solid var(--line);background:#fff;color:var(--text);
+      border-radius:999px;padding:8px 12px;font-size:14px;font-weight:700;
+      cursor:pointer;
+    }
+    .hero{
+      background:linear-gradient(135deg,#e7f6ea 0%,#fff 70%);
+      border:1px solid #e5f1e7;
+      border-radius:34px;
+      padding:30px 22px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      position:relative;
+    }
+    .hero:after{
+      content:""; position:absolute; width:160px; height:160px; border-radius:50%;
+      background:rgba(252,226,154,.48); right:-56px; top:-40px;
+    }
+    .hero-icon{font-size:58px; position:relative; z-index:1}
+    h1{font-size:38px; line-height:1.08; margin:10px 0 12px; letter-spacing:.02em; position:relative; z-index:1}
+    h2{font-size:27px; line-height:1.2; margin:8px 0 8px}
+    h3{font-size:21px; margin:0 0 4px}
+    p{font-size:16px; line-height:1.65; color:var(--muted); margin:8px 0}
+    .chips{display:flex; gap:8px; flex-wrap:wrap; margin:16px 0}
+    .chip{font-size:13px; font-weight:800; padding:8px 10px; border-radius:999px; background:#fff; border:1px solid var(--line)}
+    .primary{
+      appearance:none;border:0;border-radius:999px;background:var(--green);
+      color:#fff;font-size:18px;font-weight:900;padding:15px 22px;
+      min-height:52px;cursor:pointer;box-shadow:0 12px 26px rgba(103,167,118,.25);
+      width:100%;
+    }
+    .primary.orange{background:var(--orange)}
+    .primary.blue{background:var(--blue)}
+    .primary.purple{background:var(--purple)}
+    .secondary{
+      appearance:none;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--text);
+      font-size:16px;font-weight:850;padding:13px 18px;min-height:48px;cursor:pointer;
+    }
+    .grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:16px}
+    .category{
+      min-height:178px;background:#fff;border:1px solid var(--line);border-radius:28px;
+      padding:18px;box-shadow:0 10px 24px rgba(52,64,73,.07);
+      display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;
+      cursor:pointer;text-align:left;
+    }
+    .cat-icon{
+      width:54px;height:54px;border-radius:18px;display:grid;place-items:center;
+      font-size:28px;margin-bottom:10px;
+    }
+    .category small{color:var(--muted);line-height:1.45;font-size:13px}
+    .card{
+      background:#fff;border:1px solid var(--line);border-radius:var(--radius);
+      padding:20px;box-shadow:0 12px 30px rgba(52,64,73,.08); margin:14px 0;
+    }
+    .rule-card{
+      border-radius:26px;padding:20px;margin:14px 0;
+      border:1px solid transparent;
+    }
+    .rule-card.good{background:#e7f6ea;border-color:#d3edd8}
+    .rule-card.warn{background:#fdf1e0;border-color:#fae1bf}
+    .rule-card ul{margin:10px 0 0; padding-left:22px; line-height:1.9; font-size:16px}
+    .stepper{
+      display:flex; gap:5px; margin:12px 0 18px;
+      overflow:hidden;
+    }
+    .step{
+      flex:1;text-align:center;font-size:11px;font-weight:900;
+      border-radius:999px;padding:7px 4px;background:#fff;border:1px solid var(--line);color:var(--muted);
+      white-space:nowrap;
+    }
+    .step.on{background:var(--theme,var(--green)); color:#fff; border-color:var(--theme,var(--green))}
+    .shop-main{display:flex; gap:16px; align-items:flex-start}
+    .big-icon{
+      width:78px;height:78px;border-radius:24px;display:grid;place-items:center;font-size:38px; flex:0 0 auto;
+    }
+    .tagrow{display:flex; gap:7px; flex-wrap:wrap; margin:10px 0}
+    .tag{font-size:12px;font-weight:850;border-radius:999px;padding:7px 9px;background:#f7f8f8;color:var(--text)}
+    .menu-item{
+      display:flex;align-items:center;gap:14px;background:#fff;border:1px solid var(--line);
+      border-radius:24px;padding:16px;margin:12px 0;box-shadow:0 8px 20px rgba(52,64,73,.06)
+    }
+    .menu-emoji{
+      width:56px;height:56px;border-radius:18px;display:grid;place-items:center;font-size:28px;background:var(--light,#e7f6ea);
+      flex:0 0 auto;
+    }
+    .menu-info{flex:1}
+    .price{font-size:18px;color:var(--green-dark);font-weight:900}
+    .add-btn{
+      border:0;background:var(--theme,var(--green));color:#fff;border-radius:999px;
+      padding:11px 14px;font-weight:900;font-size:15px;cursor:pointer;min-width:70px;
+    }
+    .confirm-box{
+      text-align:center;padding:30px 20px;border-radius:30px;background:#fff;border:1px solid var(--line);
+      box-shadow:var(--shadow); margin:22px 0;
+    }
+    .selected-name{font-size:30px;font-weight:950;margin:8px 0 16px}
+    .pill{display:inline-block;font-size:15px;font-weight:900;border-radius:999px;padding:9px 12px;margin:4px;background:#f7f8f8}
+    .pay-option{
+      width:100%;text-align:left;border:1px solid transparent;border-radius:24px;
+      padding:18px 20px;margin:12px 0;background:#fff;font-size:18px;font-weight:900;color:var(--text);cursor:pointer;
+      box-shadow:0 8px 20px rgba(52,64,73,.06);
+    }
+    .pay-option.green{background:#e7f6ea}.pay-option.blue{background:#e6f2fb}.pay-option.orange{background:#fdf1e0}
+    .check-row{
+      display:flex;align-items:center;gap:12px;border:1px solid var(--line);background:#fff;border-radius:20px;
+      padding:14px 16px;margin:10px 0;
+    }
+    .checkmark{
+      width:34px;height:34px;border-radius:12px;display:grid;place-items:center;background:#e7f6ea;color:var(--green-dark);font-weight:950;
+    }
+    .check-label{font-weight:900; min-width:88px}
+    .check-value{color:var(--muted);font-weight:700}
+    .success{
+      min-height:70vh;display:flex;flex-direction:column;justify-content:center;
+    }
+    .success-card{text-align:center;background:#fff;border:1px solid var(--line);border-radius:36px;padding:34px 24px;box-shadow:var(--shadow)}
+    .success-icon{font-size:54px}
+    .notice{
+      background:#fff;border:1px solid var(--line);border-radius:20px;padding:12px 14px;
+      color:var(--muted);font-size:13px;line-height:1.55;margin:18px 0;
+    }
+    .bottom-actions{display:flex; gap:10px; margin-top:18px}
+    .bottom-actions > button{flex:1}
+    .muted-center{text-align:center;color:var(--muted);font-size:14px}
+    @media (max-width:360px){
+      .app{padding:14px 12px 24px}
+      h1{font-size:34px}
+      .grid2{gap:10px}
+      .category{padding:14px;min-height:164px}
+      .step{font-size:10px}
+    }
+  </style>
+</head>
+<body>
+  <main class="app" id="app">
+    <section class="screen active" id="cover">
+      <div class="hero">
+        <div class="hero-icon">🍱</div>
+        <h1>安心點餐<br>練習機</h1>
+        <p>早餐、便當、飲料、小吃，一次練習最常見的點餐流程。</p>
+        <div class="chips">
+          <span class="chip">不綁信用卡</span>
+          <span class="chip">不真下單</span>
+          <span class="chip">安心練習</span>
+        </div>
+        <button class="primary" onclick="go('rules')">開始練習</button>
+      </div>
+      <div class="card">
+        <p>這是一份模擬操作畫面。你可以練習選店家、看菜單、確認金額與付款方式，但不會真的送出訂單，也不會付款。</p>
+      </div>
+      <p class="muted-center">先看、再選、再確認，點餐也可以很安心。</p>
+    </section>
+
+    <section class="screen" id="rules">
+      <div class="topbar">
+        <div class="brand">安心點餐</div>
+        <button class="ghost-btn" onclick="go('cover')">首頁</button>
+      </div>
+      <h2>先知道規則</h2>
+      <p>今天只做安全、簡單的點餐練習。</p>
+      <div class="stepper"><span class="step on" style="--theme:#67a776">選類別</span><span class="step">選店家</span><span class="step">看菜單</span><span class="step">確認</span><span class="step">付款</span><span class="step">完成</span></div>
+      <div class="rule-card good">
+        <h3>✅ 可以做的事</h3>
+        <ul>
+          <li>看店家與營業時間</li>
+          <li>看菜單與價格</li>
+          <li>選餐點、確認數量</li>
+          <li>確認付款方式</li>
+        </ul>
+      </div>
+      <div class="rule-card warn">
+        <h3>🚫 今天不做的事</h3>
+        <ul>
+          <li>不輸入信用卡</li>
+          <li>不綁定付款</li>
+          <li>不真的送出訂單</li>
+          <li>不點陌生付款連結</li>
+        </ul>
+      </div>
+      <button class="primary" onclick="go('category')">我了解，開始選餐</button>
+      <div class="notice">如果不確定怎麼按，可以請現場講師或志工協助。</div>
+    </section>
+
+    <section class="screen" id="category">
+      <div class="topbar">
+        <div class="brand">安心點餐</div>
+        <button class="ghost-btn" onclick="go('cover')">首頁</button>
+      </div>
+      <h2>今天想練習點什麼？</h2>
+      <p>選一個你最常用的情境開始。</p>
+      <div class="stepper" id="catStepper"></div>
+      <div class="grid2" id="categoryGrid"></div>
+      <div class="notice">不論選哪一類，都會帶你走一遍完整的點餐練習流程。</div>
+    </section>
+
+    <section class="screen" id="shop">
+      <div class="topbar">
+        <div class="brand">安心點餐</div>
+        <button class="ghost-btn" onclick="go('category')">換類別</button>
+      </div>
+      <h2 id="shopTitle"></h2>
+      <p>先看營業時間與付款方式，再決定是否繼續。</p>
+      <div class="stepper" id="shopStepper"></div>
+      <div class="card">
+        <div class="shop-main">
+          <div class="big-icon" id="shopIcon"></div>
+          <div>
+            <h3 id="shopName"></h3>
+            <div class="tagrow">
+              <span class="tag" id="shopHours"></span>
+              <span class="tag" id="shopPay"></span>
+            </div>
+          </div>
+        </div>
+        <p id="shopDesc"></p>
+        <button class="primary" id="menuBtn" onclick="go('menu')">進入菜單</button>
+      </div>
+      <div class="notice">小提醒：這是模擬畫面，不會真的幫你下單。</div>
+      <button class="secondary" onclick="go('category')">← 上一步</button>
+    </section>
+
+    <section class="screen" id="menu">
+      <div class="topbar">
+        <div class="brand">安心點餐</div>
+        <button class="ghost-btn" onclick="go('category')">換類別</button>
+      </div>
+      <h2 id="menuTitle"></h2>
+      <p id="menuSubtitle"></p>
+      <div class="stepper" id="menuStepper"></div>
+      <div id="menuList"></div>
+      <div class="notice">先看清楚餐點名稱與價格，再往下一步。</div>
+      <button class="secondary" onclick="go('shop')">← 上一步</button>
+    </section>
+
+    <section class="screen" id="confirm">
+      <div class="topbar">
+        <div class="brand">安心點餐</div>
+        <button class="ghost-btn" onclick="go('category')">換類別</button>
+      </div>
+      <h2 id="confirmTitle"></h2>
+      <p>下單前先確認，不用急著往下按。</p>
+      <div class="stepper" id="confirmStepper"></div>
+      <div class="confirm-box">
+        <p>你選擇的是</p>
+        <div class="selected-name" id="selectedName"></div>
+        <div>
+          <span class="pill">數量：1 份</span>
+          <span class="pill" id="selectedPrice"></span>
+        </div>
+      </div>
+      <div class="bottom-actions">
+        <button class="secondary" onclick="go('menu')">重新選餐</button>
+        <button class="primary" onclick="go('pay')">確認餐點</button>
+      </div>
+      <div class="notice">看清楚餐點、數量與金額，才算真正看懂。</div>
+    </section>
+
+    <section class="screen" id="pay">
+      <div class="topbar">
+        <div class="brand">安心點餐</div>
+        <button class="ghost-btn" onclick="go('category')">換類別</button>
+      </div>
+      <h2 id="payTitle"></h2>
+      <p>今天只練習安全、簡單的付款選項。</p>
+      <div class="stepper" id="payStepper"></div>
+      <div class="card">
+        <h3 id="paySummary"></h3>
+        <button class="pay-option green" onclick="choosePay('到店現金付款')">💵 到店現金付款</button>
+        <button class="pay-option blue" onclick="choosePay('到店悠遊卡付款')">💳 到店悠遊卡付款</button>
+        <button class="pay-option orange" onclick="choosePay('櫃台付款')">🧾 櫃台付款</button>
+      </div>
+      <div class="notice">這裡沒有信用卡、沒有轉帳，也沒有陌生付款連結。</div>
+      <button class="secondary" onclick="go('confirm')">← 上一步</button>
+    </section>
+
+    <section class="screen" id="check">
+      <div class="topbar">
+        <div class="brand">安心點餐</div>
+        <button class="ghost-btn" onclick="go('category')">換類別</button>
+      </div>
+      <h2 id="checkTitle"></h2>
+      <p>完成這五項，就代表你已經會看懂流程。</p>
+      <div class="stepper" id="checkStepper"></div>
+      <div id="checkList"></div>
+      <button class="primary" onclick="go('success')">完成練習</button>
+      <div class="notice">你可以多練習不同類別，讓自己更熟悉點餐畫面。</div>
+    </section>
+
+    <section class="screen" id="success">
+      <div class="success">
+        <div class="success-card">
+          <div class="success-icon">🎉</div>
+          <h1 style="font-size:34px">恭喜完成<br>點餐練習！</h1>
+          <p id="successText" style="color:var(--text);font-weight:800"></p>
+          <p>這是模擬操作，沒有真的下單，也沒有付款。</p>
+          <div class="bottom-actions">
+            <button class="primary" onclick="go('category')">再練習一次</button>
+            <button class="secondary" onclick="go('cover')">回首頁</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+<script>
+const categories = [
+  {
+    key:"breakfast", name:"早餐", icon:"🍳", theme:"#f4a75c", light:"#fdf1e0",
+    shop:"暖心早餐屋", hours:"06:00–11:30", pay:"現金／悠遊卡／櫃台付款",
+    desc:"早餐吃得好，一天更有精神。這家店適合練習看餐點、挑價格與確認付款方式。",
+    items:[["火腿蛋吐司",55,"🥪"],["蔬菜蛋餅",50,"🍳"],["豆漿＋飯糰",65,"🍙"]]
+  },
+  {
+    key:"lunch", name:"午餐便當", icon:"🍱", theme:"#67a776", light:"#e7f6ea",
+    shop:"幸福便當店", hours:"10:30–19:30", pay:"現金／悠遊卡／櫃台付款",
+    desc:"吃得飽、選得清楚，就是安心點餐。這家店適合練習便當類餐點選擇。",
+    items:[["雞肉飯便當",90,"🍗"],["排骨便當",110,"🍖"],["魚排便當",120,"🐟"]]
+  },
+  {
+    key:"drink", name:"飲料", icon:"🥤", theme:"#63a5d6", light:"#e6f2fb",
+    shop:"清涼茶飲站", hours:"09:30–21:00", pay:"現金／悠遊卡／櫃台付款",
+    desc:"先看甜度、品項與價格，再決定要不要點。飲料類很適合練習看清楚選項。",
+    items:[["珍珠奶茶",60,"🧋"],["無糖青茶",35,"🍵"],["檸檬冬瓜",45,"🍋"]]
+  },
+  {
+    key:"snack", name:"小吃", icon:"🍜", theme:"#9c7ec4", light:"#f0eafa",
+    shop:"巷口麵食小吃", hours:"11:00–20:30", pay:"現金／悠遊卡／櫃台付款",
+    desc:"常見小吃也能先看菜單，再安心選擇。適合練習簡單餐點確認。",
+    items:[["陽春麵",55,"🍜"],["餛飩湯",50,"🥣"],["滷肉飯",45,"🍚"]]
+  }
+];
+
+const steps = ["選類別","選店家","看菜單","確認","付款","完成"];
+let state = {cat: categories[0], item: null, pay:"到店／櫃台付款"};
+
+function stepper(active, theme){
+  return steps.map((s,i)=>`<span class="step ${i+1===active?'on':''}" style="${i+1===active?`--theme:${theme}`:''}">${s}</span>`).join("");
+}
+
+function setTheme(cat){
+  document.documentElement.style.setProperty("--theme", cat.theme);
+  document.documentElement.style.setProperty("--light", cat.light);
+}
+
+function go(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  window.scrollTo({top:0, behavior:"instant"});
+  render();
+}
+
+function renderCategories(){
+  document.getElementById("catStepper").innerHTML = stepper(1, "#67a776");
+  const grid = document.getElementById("categoryGrid");
+  grid.innerHTML = categories.map(cat => `
+    <button class="category" onclick="selectCat('${cat.key}')">
+      <div>
+        <div class="cat-icon" style="background:${cat.light}">${cat.icon}</div>
+        <h3>${cat.name}</h3>
+        <small>${cat.desc.split("。")[0]}。</small>
+      </div>
+      <strong style="color:${cat.theme}">選擇${cat.name}</strong>
+    </button>
+  `).join("");
+}
+
+function selectCat(key){
+  state.cat = categories.find(c=>c.key===key);
+  state.item = null;
+  state.pay = "到店／櫃台付款";
+  setTheme(state.cat);
+  go("shop");
+}
+
+function selectItem(index){
+  const [name, price, emoji] = state.cat.items[index];
+  state.item = {name, price, emoji};
+  go("confirm");
+}
+
+function choosePay(pay){
+  state.pay = pay;
+  go("check");
+}
+
+function render(){
+  const cat = state.cat;
+  setTheme(cat);
+  renderCategories();
+
+  if(document.getElementById("shop").classList.contains("active")){
+    document.getElementById("shopTitle").textContent = `${cat.name}｜選一家店`;
+    document.getElementById("shopStepper").innerHTML = stepper(2, cat.theme);
+    document.getElementById("shopIcon").textContent = cat.icon;
+    document.getElementById("shopIcon").style.background = cat.light;
+    document.getElementById("shopName").textContent = cat.shop;
+    document.getElementById("shopHours").textContent = `營業 ${cat.hours}`;
+    document.getElementById("shopPay").textContent = cat.pay;
+    document.getElementById("shopDesc").textContent = cat.desc;
+    document.getElementById("menuBtn").style.background = cat.theme;
+  }
+
+  if(document.getElementById("menu").classList.contains("active")){
+    document.getElementById("menuTitle").textContent = `${cat.name}｜看菜單，選餐點`;
+    document.getElementById("menuSubtitle").textContent = `店家：${cat.shop}`;
+    document.getElementById("menuStepper").innerHTML = stepper(3, cat.theme);
+    document.getElementById("menuList").innerHTML = cat.items.map((item,i)=>`
+      <div class="menu-item">
+        <div class="menu-emoji" style="background:${cat.light}">${item[2]}</div>
+        <div class="menu-info">
+          <h3>${item[0]}</h3>
+          <div class="price">${item[1]} 元</div>
+        </div>
+        <button class="add-btn" style="background:${cat.theme}" onclick="selectItem(${i})">加入</button>
+      </div>
+    `).join("");
+  }
+
+  if(state.item){
+    ["confirm","pay","check"].forEach(id=>{
+      const el = document.getElementById(id+"Stepper");
+      if(el) el.innerHTML = stepper(id==="confirm"?4:5, cat.theme);
+    });
+    document.getElementById("confirmTitle").textContent = `${cat.name}｜確認餐點`;
+    document.getElementById("selectedName").textContent = state.item.name;
+    document.getElementById("selectedPrice").textContent = `金額：${state.item.price} 元`;
+
+    document.getElementById("payTitle").textContent = `${cat.name}｜選付款方式`;
+    document.getElementById("paySummary").textContent = `餐點：${state.item.name}｜金額：${state.item.price} 元`;
+
+    document.getElementById("checkTitle").textContent = `${cat.name}｜下單前五確認`;
+    const checks = [
+      ["店家正確", cat.shop],
+      ["餐點正確", state.item.name],
+      ["數量正確", "1 份"],
+      ["金額清楚", `${state.item.price} 元`],
+      ["付款清楚", state.pay]
+    ];
+    document.getElementById("checkList").innerHTML = checks.map(([a,b])=>`
+      <div class="check-row">
+        <div class="checkmark">✓</div>
+        <div class="check-label">${a}</div>
+        <div class="check-value">${b}</div>
+      </div>
+    `).join("");
+
+    document.getElementById("successText").innerHTML =
+      `我今天練習點了：${state.item.name}<br>金額：${state.item.price} 元<br>付款方式：${state.pay}`;
+  }
+
+  document.querySelectorAll(".primary").forEach(b=>{
+    if(!b.classList.contains("orange") && !b.classList.contains("blue") && !b.classList.contains("purple")){
+      b.style.background = (document.querySelector(".screen.active")?.id === "cover" || document.querySelector(".screen.active")?.id === "rules" || document.querySelector(".screen.active")?.id === "category") ? "#67a776" : cat.theme;
+    }
+  });
+}
+
+render();
+</script>
+</body>
+</html>
